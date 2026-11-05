@@ -1,5 +1,5 @@
 
-# Workflow ka naam jo GitHub Actions tab mein show hoga
+# Workflow aka (CI/CD) ka naam jo GitHub Actions tab mein show hoga
 name: Build and Deploy NodeJS App on AWS
 
 # Ye workflow kab execute hoga?
