@@ -1,39 +1,92 @@
+
+# Workflow ka naam jo GitHub Actions tab mein show hoga
 name: Build and Deploy NodeJS App on AWS
+
+# Ye workflow kab execute hoga?
 on:
   push:
+    # Jab bhi main branch par code push hoga,
+    # GitHub Actions automatically start ho jayega.
     branches:
-    - main
-  
+      - main
+
+# Jobs define karte hain.
+# Job ka matlab hai ke workflow mein kya tasks perform honge.
 jobs:
+
+  # Job ka naam
   Build-App:
+
+    # GitHub is job ko Ubuntu virtual machine par run karega.
+    # Yani humein apna server setup karne ki zaroorat nahi.
     runs-on: ubuntu-latest
 
+    # Steps mein hum apne tasks define karte hain.
     steps:
-      - uses: actions/checkout@v5    
 
+      # STEP 1:
+      # GitHub repository ka latest code runner machine par download karega.
+      - name: Checkout Source Code
+        uses: actions/checkout@v5
+
+      # STEP 2:
+      # Dockerfile use karke Docker image build ki jayegi.
+      # Is image mein hamari NodeJS application aur dependencies hongi.
       - name: Build the Docker Image
         run: |
-         docker build . --tag 559050236729.dkr.ecr.us-east-1.amazonaws.com/dev/nodeimages:latest
-         
+          docker build . \
+            --tag 559050236729.dkr.ecr.us-east-1.amazonaws.com/dev/nodeimages:latest
+
+      # STEP 3:
+      # AWS ke saath authentication configure karenge.
+      # Credentials GitHub Secrets se securely read hongi.
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 
 
-      - name: Login to Amazon Elastic Container Registry
+          # AWS IAM user ki Access Key
+          # GitHub repository secrets mein save honi chahiye.
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+
+          # AWS IAM user ki Secret Access Key
+          # Isay kabhi code mein directly nahi likhna.
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+          # AWS ka region jahan ECR aur ECS resources hain.
+          aws-region: us-east-1
+
+      # STEP 4:
+      # Amazon ECR mein login karenge.
+      # ECR ka matlab Elastic Container Registry hai.
+      # Yahan hamari Docker images store hoti hain.
+      - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Push the Image to AWS ECR
+      # STEP 5:
+      # Docker image ko AWS ECR repository mein upload karenge.
+      - name: Push Docker Image to AWS ECR
         run: |
-            docker push 559050236729.dkr.ecr.us-east-1.amazonaws.com/dev/nodeimages:latest
+          docker push 559050236729.dkr.ecr.us-east-1.amazonaws.com/dev/nodeimages:latest
 
-      - name: Revisions on ECS with Updated Docker Images
+      # STEP 6:
+      # ECS service ko updated task definition deploy karenge.
+      # ECS new Docker image ke saath application update karega.
+      - name: Deploy Updated Application to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
+
+          # ECS task definition JSON file ka path.
+          # Is file mein container image, CPU, memory aur ports
+          # waghera ki configuration hoti hai.
           task-definition: ecs-task.json
+
+          # ECS service ka naam
           service: node-app-srv-1
+
+          # ECS cluster ka naam
           cluster: node-app-dev
-          wait-for-service-stability: true        
+
+          # Deployment ke baad wait karega jab tak
+          # ECS service stable nahi ho jati.
+          wait-for-service-stability: true
