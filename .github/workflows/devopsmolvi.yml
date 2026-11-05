@@ -25,7 +25,7 @@ jobs:
     steps:
 
       # STEP 1:
-      # GitHub repository ka latest code runner machine par download karega.
+      # GitHub repository ka latest code runner machine par download karega(yani cehckout karega).
       - name: Checkout Source Code
         uses: actions/checkout@v5
 
@@ -35,7 +35,7 @@ jobs:
       - name: Build the Docker Image
         run: |
           docker build . \
-            --tag 559050236729.dkr.ecr.us-east-1.amazonaws.com/dev/nodeimages:latest
+            --tag 559050236729.dkr.ecr.us-east-1.amazonaws.com/dev/nodeimages:latest #dev/nodeimages humari ecr directory name honi chiyay,,is say pehlay ecr ka addreess ha umari
 
       # STEP 3:
       # AWS ke saath authentication configure karenge.
